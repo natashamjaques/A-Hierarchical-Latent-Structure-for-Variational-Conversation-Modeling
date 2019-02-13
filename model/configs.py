@@ -153,13 +153,15 @@ def get_config(parse=True, **optional_kwargs):
     kwargs = vars(kwargs)
     kwargs.update(optional_kwargs)
 
-    import pdb; pdb.set_trace()
-
     return Config(**kwargs)
 
 
 def get_config_from_file(checkpoint_dir, **optional_kwargs):
+    f = open(checkpoint_dir + 'config.txt', 'r')
+    lines = f.readlines()
 
+    import pdb; pdb.set_trace()
+    
     config_dict.update(optional_kwargs)
 
     return Config(**config_dict)
