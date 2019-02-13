@@ -1,6 +1,7 @@
+import argparse
 from solver import Solver, VariationalSolver
 from data_loader import get_loader
-from configs import get_config
+from configs import get_config_from_file
 from utils import Vocab, Tokenizer
 import os
 import pickle
@@ -13,7 +14,11 @@ def load_pickle(path):
 
 
 if __name__ == '__main__':
-    config = get_config(mode='test')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', type=str, default=None)
+    kwargs = parser.parse_args()
+
+    config = get_config_from_file(kwargs.checkpoint, mode='test')
 
     print('Loading Vocabulary...')
     vocab = Vocab()
