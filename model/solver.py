@@ -73,6 +73,7 @@ class Solver(object):
     def load_model(self, checkpoint):
         """Load parameters from checkpoint"""
         print(f'Load parameters from {checkpoint}')
+        import pdb; pdb.set_trace()
         epoch = re.match(r"[0-9]*", os.path.basename(checkpoint)).group(0)
         self.epoch_i = int(epoch)
         self.model.load_state_dict(torch.load(checkpoint))

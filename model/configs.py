@@ -1,5 +1,6 @@
 import os
 import argparse
+import ast
 from datetime import datetime
 from collections import defaultdict
 from pathlib import Path
@@ -156,12 +157,41 @@ def get_config(parse=True, **optional_kwargs):
     return Config(**kwargs)
 
 
-def get_config_from_file(checkpoint_dir, **optional_kwargs):
-    f = open(checkpoint_dir + 'config.txt', 'r')
+def get_config_from_dir(checkpoint_dir, **optional_kwargs):
+    f = open(os.path.join(checkpoint_dir, 'config.txt'), 'r')
     lines = f.readlines()
 
-    import pdb; pdb.set_trace()
+    # Find latest checkpoint in directory
+    checkpoints = [f for f in os.listdir(checkpoint_dir) if str.isdigit(f[0])]
+    checkpoint_nums = [f[:f.find('.')] for f in checkpoints]
+    latest = sorted(checkpoint_nums)[-1]
+    latest_checkpoint = os.path.join(checkpoint_dir, latest + '.pkl')
     
+    # Transform raw file lines into appropriate dict format
+    lines = lines[1:]   # Discard line reading 'Configurations'
+    lines = [l for l in lines if 'Posix' not in l]
+    for i, l in enumerate(lines):
+        if 'rnn' in l:
+            lower = l.lower()
+            if 'rnncell' in l:
+                prefix = 'rnncell'
+            else:
+                prefix = 'rnn'
+            if 'lstm' in lower:
+                lines[i] = " '" + prefix + "': 'lstm',"
+            else:
+                lines[i] = " '" + prefix + "': 'gru',"
+        if 'adam' in l:
+            lines[i] = " 'optimizer': 'Adam',"
+        if 'checkpoint' in l:
+            lines[i] = " 'checkpoint': '" + latest_checkpoint + "',"
+
+    # Transform lines into dict
+    f_str = ''.join(lines)
+    f_str = f_str.replace('\n', '')
+    config_dict = ast.literal_eval(f_str)
+
+    # Override with additional config args
     config_dict.update(optional_kwargs)
 
     return Config(**config_dict)

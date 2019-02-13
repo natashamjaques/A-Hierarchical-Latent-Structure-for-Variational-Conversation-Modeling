@@ -1,7 +1,7 @@
 import argparse
 from solver import Solver, VariationalSolver
 from data_loader import get_loader
-from configs import get_config_from_file
+from configs import get_config_from_dir
 from utils import Vocab, Tokenizer
 import os
 import pickle
@@ -18,7 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint', type=str, default=None)
     kwargs = parser.parse_args()
 
-    config = get_config_from_file(kwargs.checkpoint, mode='test')
+    config = get_config_from_dir(kwargs.checkpoint, mode='test')
 
     print('Loading Vocabulary...')
     vocab = Vocab()
