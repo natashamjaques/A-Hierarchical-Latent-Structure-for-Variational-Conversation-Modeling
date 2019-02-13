@@ -38,6 +38,11 @@ def top_elements(array, k):
     ind = np.argpartition(array, -k)[-k:]
     return ind[np.argsort(array[ind])][::-1]
 
+def is_valid(token):
+    if token.startswith('<') and token.endswith('>'):
+        return False
+    return True
+
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
     argparser.add_argument('--filepath', type=str, default='/mas/u/asma_gh/A-Hierarchical-Latent-Structure-for-Variational-Conversation-Modeling/datasets/cornell/train/sentences.pkl', required=False, help="Dataset file path")
@@ -46,7 +51,9 @@ if __name__ == "__main__":
     argparser.add_argument('--maxlen', type=int, default=1000, help="Max length of input text")
     args = argparser.parse_args()
     sentence_probs = []
+    flattened_sentences = []
     output_path = args.filepath[:-4]+'_emojis.pkl'
+    flattened_sentences_output_path = args.filepath[:-13] + 'flattened_sentences.pkl'
 
     # Tokenizing using dictionary
     with open(VOCAB_PATH, 'r') as f:
@@ -58,26 +65,31 @@ if __name__ == "__main__":
     model = torchmoji_emojis(PRETRAINED_PATH)
 
     sentences = pickle.load(open(args.filepath, 'rb'))
-    for idx, turn in enumerate(sentences):
-        flat_list = [token for line in turn for token in line]
-        sentence = " ".join(flat_list)
-        # Running predictions
-        tokenized, _, _ = st.tokenize_sentences([sentence])
-        # Get sentence probability
-        prob = model(tokenized)[0]
-        sentence_probs += [list(prob)]
-        if (idx < args.debuglen):
-            print (max(prob))
-            print (prob)
-            # Top emoji id
-            emoji_ids = top_elements(prob, 1)
+    idx = 0
+    for turn in sentences:
+        for line in turn:
+            flat_list = [token for token in line if is_valid(token)]
+            sentence = " ".join(flat_list)
+            if len(sentence) == 0:
+                continue
+            idx += 1
+            flattened_sentences += [sentence]
+            tokenized, _, _ = st.tokenize_sentences([sentence])
+            prob = model(tokenized)[0]
+            sentence_probs += [list(prob)]
+            if (idx < args.debuglen):
+                print (max(prob))
+                print (prob)
+                # Top emoji id
+                emoji_ids = top_elements(prob, 1)
+                # map to emojis
+                emojis = map(lambda x: EMOJIS[x], emoji_ids)
+                print(emoji.emojize("{} {}".format(sentence,' '.join(emojis)), use_aliases=True))
 
-            # map to emojis
-            emojis = map(lambda x: EMOJIS[x], emoji_ids)
-
-            print(emoji.emojize("{} {}".format(sentence,' '.join(emojis)), use_aliases=True))
-        if (idx % args.step == 0):
-            print ('Step: ', idx+1)
-            pickle.dump(sentence_probs, open(output_path, 'wb'))
-    print('Step: ', idx + 1)
+            if (idx % args.step == 0):
+                print ('Step: ', idx)
+                # pickle.dump(flattened_sentences, open(flattened_sentences_output_path, 'wb'))
+                # pickle.dump(sentence_probs, open(output_path, 'wb'))
+    print('Step: ', idx)
+    pickle.dump(flattened_sentences, open(flattened_sentences_output_path, 'wb'))
     pickle.dump(sentence_probs, open(output_path, 'wb'))
