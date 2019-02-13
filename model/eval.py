@@ -13,6 +13,12 @@ def load_pickle(path):
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', type=str, default=None)
+    kwargs = parser.parse_args()
+
+    import pdb; pdb.set_trace()
+    checkpoint = kwargs.checkpoint
     config = get_config(mode='test')
 
     print('Loading Vocabulary...')
